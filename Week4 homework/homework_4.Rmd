@@ -1,0 +1,77 @@
+---
+title: "homework"
+author: "Yueran"
+date: "2026-11-05"
+output: html_document
+---
+```{r}
+library(tidyverse)
+library(sf)
+library(janitor)
+library(countrycode)
+```
+
+```{r}
+HDI <- read_csv("HDR25_Composite_indices_complete_time_series.csv",
+                       locale = locale(encoding = "latin1"),
+                       na = " ", skip=0)
+
+World <- st_read("World_Countries_Generalized.shp")
+```
+
+```{r}
+HDIcols<- HDI %>%
+  clean_names()%>%
+  select(iso3, country, gii_2019, gii_2010)%>%
+  mutate(difference=gii_2019-gii_2010)%>%
+  #not needed here as we can now use the country name...but see below
+  mutate(iso_code=countrycode(country, origin = 'country.name', destination = 'iso2c'))%>%
+  mutate(iso_code2=countrycode(iso3, origin ='iso3c', destination = 'iso2c'))
+```
+
+```{r}
+Join_HDI <- World %>% 
+  clean_names() %>%
+  left_join(., 
+            HDIcols,
+            # change to "aff_iso" = "iso_code"
+            by = c("iso" = "iso_code"))
+
+```
+
+```{r}
+Join_HDI_2 <- World %>% 
+  clean_names() %>%
+  left_join(., 
+            HDIcols,
+            by = c("country" = "country"))
+#251
+```
+
+```{r}
+# difference only if used aff_iso to join and make Join_HDI
+Join_HDI_GB<-Join_HDI %>%
+  filter(aff_iso=="GB")
+
+Join_HDI_2_GB<-Join_HDI_2 %>%
+  filter(aff_iso=="GB")
+
+st_write(
+  Join_HDI,
+  "World_GII_2010_2019.geojson",
+  delete_dsn = TRUE
+)
+```
+```
+```{r}
+
+```
+
+```{r}
+st_write(
+  Join_HDI,
+  "homework_4/World_GII_2010_2019.geojson",
+  delete_dsn = TRUE
+)
+```
+
